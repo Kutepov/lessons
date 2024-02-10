@@ -1,0 +1,47 @@
+version: '3.2'
+
+services:
+  php:
+    image: yiisoftware/yii2-php:8.1-apache
+    ports:
+      - 20080:80
+    volumes:
+      - ~/.composer-docker/cache:/root/.composer/cache:delegated
+      - ./:/app
+    networks:
+      - internal
+
+  php-console:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    volumes:
+      - ./:/app
+    ports:
+      - 9001:9001
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - internal
+
+  mysql:
+    image: mysql:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=lessons
+      - MYSQL_USER=lessons
+      - MYSQL_PASSWORD=lessonspassword
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 3s
+      retries: 20
+    networks:
+      - internal
+networks:
+  internal:
+    driver: bridge
+    ipam:
+      driver: default
